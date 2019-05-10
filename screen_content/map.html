@@ -1,0 +1,108 @@
+<style>
+      /* Set the size of the div element that contains the map */
+      #map {
+        height: 400px;  /* The height is 400 pixels */
+        width: 100%;  /* The width is the width of the web page */
+       }
+    
+</style>
+
+<div>
+      <div class="content display" id="map">
+      </div>
+      <div class ="location">
+          <button id="find-me">
+              Show my location
+          </button>
+          <br>
+          <p>This map shows the current traffic accidents and construction sites in chicago</p>
+          <p>Red markers represent accidents and construction sites</p>
+          <p>Blue marker represents location of user. Zoom in and click on marker to see coordinates</p>
+          <p id = "status"></p>
+      </div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script>
+    var map, infoWindow;
+    function initMap() {
+        // The location of chicago
+        var chicago = {lat: 41.8781, lng: -87.6298};
+        // The map, centered at chicago
+        map = new google.maps.Map(document.getElementById('map'), {zoom: 11, center: chicago});
+        
+        //API endpoint
+    var url = "https://www.mapquestapi.com/traffic/v2/incidents?&outFormat=json&boundingBox=41.95029860413908%2C-87.46833801269531%2C41.81584950164211%2C-87.79655456542969&key=oqcFcrMvPcdJvhghkYrACci7GAFyATX6"
+            
+        $.get(url, function(response) {
+            console.log("in data callback");
+            var data = response.incidents;
+            createMarkers(map, data);
+            });
+        infoWindow = new google.maps.InfoWindow;
+
+      }
+    
+      $("#find-me").on("click", function() {
+          // Try HTML5 geolocation
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            initMap();
+             
+            var marker = new google.maps.Marker({position: pos, map: map, icon: "https://img.icons8.com/ultraviolet/40/000000/marker.png"});
+            
+            var string = "<p>" + "Location found: " + pos.lat + " , " + pos.lng + "</p>"
+            
+            var infoWindow = new google.maps.InfoWindow({
+                content: string
+              });
+            
+              marker.addListener('click', function() {
+                infoWindow.open(map, marker);
+              });
+
+          }, function() {
+            handleLocationError(true, infoWindow, map.getCenter());
+          });
+        } else {
+          // Browser doesn't support Geolocation
+          handleLocationError(false, infoWindow, map.getCenter());
+        }
+      })
+
+      function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(browserHasGeolocation ?
+                              'Error: The Geolocation service failed.' :
+                              'Error: Your browser doesn\'t support geolocation.');
+        infoWindow.open(map);
+      }
+      
+      function createMarkers(map, data) {
+            //console.log(data, map);
+            $.each(data, function(i,v) {
+                //console.log(v);
+                var location = {lat: parseFloat(v.lat), lng: parseFloat(v.lng)}
+                var marker = new google.maps.Marker({position: location, map: map})               
+            });
+      }
+    
+    initMap();
+        
+
+</script>
+
+    <!--Load the API from the specified URL
+    * The async attribute allows the browser to render the page while the API loads
+    * The key parameter will contain your own API key (which is not needed for this tutorial)
+    * The callback parameter executes the initMap() function
+    -->
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDa4dMSOASs_iLQnhrPoQ8EZgj2Im_pZ7o&callback=initMap">
+    </script>
+</div>

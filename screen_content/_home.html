@@ -1,0 +1,108 @@
+<style>
+    #map {height: 500px;} 
+    
+    .content {
+			display: none;
+			margin: 1em;
+		}
+    
+    .template {
+            display: none;
+        }
+</style>
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+	 crossorigin="anonymous">
+<br>
+<h3 class="mdc-typography--headline3">Search</h3>
+
+<div class="g-signin2" data-onsuccess="onSignIn"></div>
+
+<div class="content" id="search">
+      <br>
+      <input type = "text" onfocus="this.value=''" id="beat" placeholder="Enter a beat">
+      <br>
+      <button id = "Search">
+          Search
+      </button>
+      
+      <button id="save">
+          Save
+      </button>
+</div>
+
+<div class="content" id="list">
+</div>
+
+<div class="card template" style="width: 18rem;">
+    <div class="card-body">
+       <h5 class="card-title"></h5>
+       <h6 class="card-subtitle mb-2 text-muted"></h6>
+       <p class="card-text1"></p>
+       <p class="card-text2"></p>
+       <p class="card-text3"></p>
+       <p class="card-text4"></p>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+
+
+    <script>
+    //Include Dexie
+    var db = new Dexie("crashes_db");
+    db.version(1).stores({
+      crashes: "++id, beat"
+    });
+        
+      $(document).ready(function() {
+          $(".template").hide();
+          $("#search").show();
+        
+        function hideScreens() {
+          $(".content").hide();
+          //$(".location").hide();
+        }
+          
+          $("#Search").on("click", function() {
+            $(".template").show();
+            //clear the list
+            $("#list").empty();
+            $("#list").show();
+            
+            var url = "https://data.cityofchicago.org/resource/85ca-t3if.json?$limit=10&beat_of_occurrence=" + $("#beat").val();
+            //retrieve data from endpoint
+            $.get(url, function(data)
+            {
+                console.log(data);
+                $.each(data, function(i,v) {
+                    //clone card
+                    var clone = $(".template").clone();
+                    //update values
+                    clone.find(".card-title").text(v.beat_of_occurrence);
+                    clone.find(".card-subtitle").text(v.street_no + " " + v.street_direction + " " + v.street_name);
+                    clone.find(".card-text1").text("Report No: " + v.rd_no);
+                    clone.find(".card-text2").text("Crash Date & Time: " + v.crash_date);
+                    clone.find(".card-text3").text("Crash Type: " + v.crash_type);
+                    clone.find(".card-text4").text("Damage: " + v.damage);
+                    //clone.find(".card-text5").text("Weather Condition: " + v.weather_condition);
+                    
+                    clone.removeClass("template");
+                    
+                    // insert into DOM
+                    $("#list").append(clone);
+                });
+            })
+         })
+         
+          $("#save").on("click", function() {
+             var beat = $("#beat").val();
+             db.crashes.put({beat: beat});
+         })
+          
+      })
+    </script>
+    
+
+
